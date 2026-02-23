@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Simple terminal blackjack game."""
+"""Simple Blackjack game with a Tkinter UI."""
 
 from __future__ import annotations
 
 import random
+import tkinter as tk
 from dataclasses import dataclass
 
 SUITS = ["♠", "♥", "♦", "♣"]
@@ -59,79 +60,175 @@ def hand_value(hand: list[Card]) -> int:
     return total
 
 
-def hand_to_string(hand: list[Card]) -> str:
-    return ", ".join(str(card) for card in hand)
+class BlackjackApp:
+    def __init__(self, root: tk.Tk) -> None:
+        self.root = root
+        self.root.title("Blackjack")
+        self.root.geometry("560x380")
+        self.root.configure(bg="#0f5132")
 
+        self.deck: Deck
+        self.player_hand: list[Card]
+        self.dealer_hand: list[Card]
+        self.round_over = False
 
-def show_hands(player: list[Card], dealer: list[Card], hide_dealer: bool = True) -> None:
-    print("\n--- Table ---")
-    if hide_dealer:
-        print(f"Dealer: {dealer[0]}, [hidden]")
-    else:
-        print(f"Dealer: {hand_to_string(dealer)} (value: {hand_value(dealer)})")
-    print(f"Player: {hand_to_string(player)} (value: {hand_value(player)})")
+        title = tk.Label(
+            root,
+            text="BLACKJACK",
+            bg="#0f5132",
+            fg="white",
+            font=("Arial", 22, "bold"),
+        )
+        title.pack(pady=(12, 4))
 
+        self.dealer_label = tk.Label(
+            root,
+            text="",
+            bg="#0f5132",
+            fg="#ffefb0",
+            font=("Consolas", 14),
+            justify="left",
+        )
+        self.dealer_label.pack(pady=8)
 
-def ask_yes_no(prompt: str) -> bool:
-    while True:
-        choice = input(prompt).strip().lower()
-        if choice in {"y", "yes"}:
-            return True
-        if choice in {"n", "no"}:
-            return False
-        print("Please type 'y' or 'n'.")
+        self.player_label = tk.Label(
+            root,
+            text="",
+            bg="#0f5132",
+            fg="#d2f4ff",
+            font=("Consolas", 14),
+            justify="left",
+        )
+        self.player_label.pack(pady=8)
 
+        self.result_label = tk.Label(
+            root,
+            text="",
+            bg="#0f5132",
+            fg="white",
+            font=("Arial", 14, "bold"),
+        )
+        self.result_label.pack(pady=12)
 
-def play_round() -> None:
-    deck = Deck()
-    player = [deck.draw(), deck.draw()]
-    dealer = [deck.draw(), deck.draw()]
+        button_frame = tk.Frame(root, bg="#0f5132")
+        button_frame.pack(pady=10)
 
-    show_hands(player, dealer, hide_dealer=True)
+        self.hit_button = tk.Button(
+            button_frame,
+            text="Hit",
+            width=12,
+            font=("Arial", 11, "bold"),
+            bg="#1e90ff",
+            fg="white",
+            command=self.hit,
+        )
+        self.hit_button.grid(row=0, column=0, padx=8)
 
-    if hand_value(player) == 21:
-        print("Blackjack! Let's reveal the dealer hand.")
-    else:
-        while hand_value(player) < 21:
-            if ask_yes_no("Hit? (y/n): "):
-                player.append(deck.draw())
-                show_hands(player, dealer, hide_dealer=True)
-            else:
-                break
+        self.stand_button = tk.Button(
+            button_frame,
+            text="Stand",
+            width=12,
+            font=("Arial", 11, "bold"),
+            bg="#6c757d",
+            fg="white",
+            command=self.stand,
+        )
+        self.stand_button.grid(row=0, column=1, padx=8)
 
-    player_total = hand_value(player)
-    if player_total > 21:
-        print("\nYou busted. Dealer wins.")
-        return
+        self.new_round_button = tk.Button(
+            button_frame,
+            text="New Round",
+            width=12,
+            font=("Arial", 11, "bold"),
+            bg="#28a745",
+            fg="white",
+            command=self.new_round,
+        )
+        self.new_round_button.grid(row=0, column=2, padx=8)
 
-    print("\nDealer's turn...")
-    show_hands(player, dealer, hide_dealer=False)
-    while hand_value(dealer) < 17:
-        dealer.append(deck.draw())
-        print("Dealer hits.")
-        show_hands(player, dealer, hide_dealer=False)
+        self.new_round()
 
-    dealer_total = hand_value(dealer)
-    player_total = hand_value(player)
+    def hand_text(self, hand: list[Card]) -> str:
+        return "  ".join(str(card) for card in hand)
 
-    print("\n--- Result ---")
-    if dealer_total > 21:
-        print("Dealer busted. You win!")
-    elif dealer_total > player_total:
-        print("Dealer wins.")
-    elif dealer_total < player_total:
-        print("You win!")
-    else:
-        print("Push (tie).")
+    def update_view(self, reveal_dealer: bool = False) -> None:
+        if reveal_dealer:
+            dealer_cards = self.hand_text(self.dealer_hand)
+            dealer_value = hand_value(self.dealer_hand)
+            dealer_text = f"Dealer: {dealer_cards}   (value: {dealer_value})"
+        else:
+            dealer_text = f"Dealer: {self.dealer_hand[0]}  [?]"
+
+        player_cards = self.hand_text(self.player_hand)
+        player_value = hand_value(self.player_hand)
+        player_text = f"Player: {player_cards}   (value: {player_value})"
+
+        self.dealer_label.config(text=dealer_text)
+        self.player_label.config(text=player_text)
+
+    def set_round_over(self) -> None:
+        self.round_over = True
+        self.hit_button.config(state=tk.DISABLED)
+        self.stand_button.config(state=tk.DISABLED)
+
+    def new_round(self) -> None:
+        self.deck = Deck()
+        self.player_hand = [self.deck.draw(), self.deck.draw()]
+        self.dealer_hand = [self.deck.draw(), self.deck.draw()]
+        self.round_over = False
+
+        self.hit_button.config(state=tk.NORMAL)
+        self.stand_button.config(state=tk.NORMAL)
+
+        self.result_label.config(text="Your move: Hit or Stand?")
+        self.update_view(reveal_dealer=False)
+
+        if hand_value(self.player_hand) == 21:
+            self.stand()
+
+    def hit(self) -> None:
+        if self.round_over:
+            return
+
+        self.player_hand.append(self.deck.draw())
+        self.update_view(reveal_dealer=False)
+        total = hand_value(self.player_hand)
+
+        if total > 21:
+            self.result_label.config(text="You busted! Dealer wins.")
+            self.update_view(reveal_dealer=True)
+            self.set_round_over()
+        elif total == 21:
+            self.stand()
+
+    def stand(self) -> None:
+        if self.round_over:
+            return
+
+        while hand_value(self.dealer_hand) < 17:
+            self.dealer_hand.append(self.deck.draw())
+
+        player_total = hand_value(self.player_hand)
+        dealer_total = hand_value(self.dealer_hand)
+
+        if dealer_total > 21:
+            message = "Dealer busted! You win!"
+        elif dealer_total > player_total:
+            message = "Dealer wins."
+        elif dealer_total < player_total:
+            message = "You win!"
+        else:
+            message = "Push (tie)."
+
+        self.result_label.config(text=message)
+        self.update_view(reveal_dealer=True)
+        self.set_round_over()
 
 
 def main() -> None:
-    print("Welcome to Blackjack!")
-    while True:
-        play_round()
-        if not ask_yes_no("\nPlay again? (y/n): "):
-            print("Thanks for playing!")
-            break
+    root = tk.Tk()
+    BlackjackApp(root)
+    root.mainloop()
 
 
 if __name__ == "__main__":

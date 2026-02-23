@@ -1,16 +1,36 @@
-# Blackjack (CLI)
+# Blackjack (Simple Visuals)
 
-A simple terminal blackjack game written in Python.
+A simple Blackjack game built with Python + Tkinter (desktop GUI).
 
-## Run
+## Run locally
 
 ```bash
 python3 blackjack.py
 ```
 
-## Rules implemented
+## How to play
 
-- Standard 52-card deck, shuffled each round.
-- Aces count as 11 or 1 to avoid busting.
-- Dealer hits until reaching 17 or more.
-- Round results: player win, dealer win, busts, or push (tie).
+- Click **Hit** to draw a card.
+- Click **Stand** to end your turn and let the dealer play.
+- Dealer draws until value is at least 17.
+- Closest to 21 without busting wins.
+- Click **New Round** to start again.
+
+## Build a Windows `.exe`
+
+On Windows, run:
+
+```bat
+build_exe.bat
+```
+
+Or manually:
+
+```bash
+python -m pip install --upgrade pyinstaller
+pyinstaller --noconfirm --onefile --windowed --name blackjack blackjack.py
+```
+
+The executable will be generated at:
+
+- `dist/blackjack.exe`
