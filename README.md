@@ -1,36 +1,31 @@
-# Blackjack (Simple Visuals)
+# Blackjack in C++
 
-A simple Blackjack game built with Python + Tkinter (desktop GUI).
+A simple terminal Blackjack game written in modern C++.
 
-## Run locally
+## Build and run (Linux/macOS)
 
 ```bash
-python3 blackjack.py
+g++ -std=c++17 -O2 blackjack.cpp -o blackjack
+./blackjack
 ```
 
-## How to play
+## Build Windows `.exe`
 
-- Click **Hit** to draw a card.
-- Click **Stand** to end your turn and let the dealer play.
-- Dealer draws until value is at least 17.
-- Closest to 21 without busting wins.
-- Click **New Round** to start again.
-
-## Build a Windows `.exe`
-
-On Windows, run:
+Use MinGW-w64 g++:
 
 ```bat
 build_exe.bat
 ```
 
-Or manually:
+This generates:
 
-```bash
-python -m pip install --upgrade pyinstaller
-pyinstaller --noconfirm --onefile --windowed --name blackjack blackjack.py
-```
+- `blackjack.exe`
 
-The executable will be generated at:
+## How to play
 
-- `dist/blackjack.exe`
+- You and the dealer each receive 2 cards.
+- Dealer shows one card and keeps one hidden until your turn ends.
+- Type `y` to **Hit** (take another card), or `n` to **Stand**.
+- Dealer draws until reaching at least 17.
+- Closest to 21 without going over wins.
+- Aces automatically count as 11 or 1 to avoid busting.
